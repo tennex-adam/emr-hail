@@ -6,13 +6,13 @@
 # TODO: validate environment variables before execution
 
 REPOSITORY_URL="https://github.com/hail-is/hail.git"
+R_DEFAULT_VERSION="3.5.3"
 
 usage(){
 cat <<EOF
 
   usage: build-wrapper.sh [ARGUMENTS]
 
-    --hail-bucket      [Your S3 Bucket Name] - REQUIRED
     --roda-bucket      [RODA S3 Bucket Name] - REQUIRED
     --subnet-id        [Subnet ID]           - REQUIRED
     --var-file         [Full File Path]      - REQUIRED
@@ -21,16 +21,17 @@ cat <<EOF
     --htslib-version   [HTSLIB Version]      - OPTIONAL.  If omitted, develop branch will be used.
     --samtools-version [Samtools Version]    - OPTIONAL.  If omitted, master branch will be used.
     --vep-version      [Number Version]      - OPTIONAL.  If omitted, VEP will not be included.
+    --R-version        [Number Version]      - OPTIONAL.  If omitted, defaults to ${R_DEFAULT_VERSION}
 
     Example:
 
-   build-wrapper.sh --hail-bucket your-quickstart-s3-bucket-name \\
-                    --roda-bucket hail-vep-pipeline \\
+   build-wrapper.sh --roda-bucket hail-vep-pipeline \\
                     --subnet-id subnet-99999999 \\
                     --var-file builds/emr-5.29.0.vars \\
                     --vpc-id vpc-99999999 \\
                     --hail-version 0.2.34 \\
                     --htslib-version 1.10.2 \\
+                    --R-version ${R_DEFAULT_VERSION} \\
                     --samtools-version 1.10 \\
                     --vep-version 99
 
@@ -86,6 +87,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --R-version)
+            R_VERSION="$2"
+            shift
+            shift
+            ;;
     esac
 done
 
@@ -104,6 +110,10 @@ else
     HAIL_NAME_VERSION="$HAIL_NAME_VERSION-vep-$VEP_VERSION"
 fi
 
+if [ -z "$R_VERSION" ]; then
+    R_VERSION="$R_DEFAULT_VERSION"
+fi
+
 export AWS_MAX_ATTEMPTS=600  # Builds time out with default value
 packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var hail_version="$HAIL_VERSION" \
@@ -113,5 +123,6 @@ packer build --var hail_name_version="$HAIL_NAME_VERSION" \
              --var subnet_id="$SUBNET_ID" \
              --var vep_version="$VEP_VERSION" \
              --var vpc_id="$VPC_ID" \
+             --var r_version="$R_VERSION" \
              --var-file="$CORE_VAR_FILE" \
              amazon-linux.json

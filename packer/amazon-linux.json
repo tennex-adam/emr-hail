@@ -32,6 +32,7 @@
       "htslib-version": "{{user `htslib_version`}}",
       "managed-by": "packer",
       "packer-version": "{{packer_version}}",
+      "r-version": "{{user `R_version`}}",
       "samtools-version": "{{user `samtools_version`}}",
       "source-ami": "{{.SourceAMIName}}",
       "spark-version": "{{user `spark_version`}}",
@@ -72,16 +73,23 @@
       ]
     },
     {
+      "type": "shell",
+      "environment_vars": [
+        "R_VERSION={{user `r_version`}}"
+      ],
+      "execute_command": "sudo -S bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": [
+        "scripts/R_install.sh"
+      ]
+    },
+    {
       "type": "file",
       "source": "scripts/R_install.R",
       "destination": "/tmp/R_install.R"
     },
     {
       "type": "shell",
-      "inline": [
-        "sudo yum -y install R",
-        "sudo R --no-save < /tmp/R_install.R && rm /tmp/R_install.R"
-      ]
+      "inline": "sudo /usr/local/bin/R --no-save < /tmp/R_install.R && rm /tmp/R_install.R"
     },
     {
       "type": "shell",
