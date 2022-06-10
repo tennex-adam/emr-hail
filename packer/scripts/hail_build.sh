@@ -15,16 +15,16 @@ function install_prereqs {
 
   yum -y update
   yum -y install \
-  cmake \
-  gcc72-c++ \
-  git \
-  java-1.8.0-openjdk \
-  java-1.8.0-openjdk-devel \
-  lz4 \
-  lz4-devel \
-  python36 \
-  python36-devel \
-  python36-setuptools
+    cmake \
+    gcc72-c++ \
+    git \
+    java-1.8.0-openjdk \
+    java-1.8.0-openjdk-devel \
+    lz4 \
+    lz4-devel \
+    python36 \
+    python36-devel \
+    python36-setuptools
 
   # Upgrade latest latest pip
   python -m pip install --upgrade pip
@@ -45,6 +45,7 @@ function install_prereqs {
   pandas
   parsimonious
   pyserial
+  pytest-runner
   requests
   scikit-learn
   scipy
