@@ -23,32 +23,29 @@ export LC_ALL=en_US.UTF-8
 
 function install_prereqs {
     yum -y install \
+        expat-devel \
         gcc72-c++ \
         gd-devel \
-        expat-devel \
         git \
         mysql55-devel \
         perl-App-cpanminus \
+        perl-autodie \
+        perl-DBD-MySQL55 \
+        perl-DBI \
         perl-Env \
+        perl-JSON \
+        perl-Test-Simple \
+        perl-Try-Tiny \
+        perl-XML-DOM \
+        perl-XML-Parser \
+        perl-XML-SAX \
+        perl-XML-Twig \
         unzip \
         which \
         zlib-devel
 
-    cpanm \
-        autodie \
-        Compress::Zlib \
-        DBD::mysql \
-        DBI \
-        Digest::MD5 \
-        GD \
-        HTTP::Tiny \
-        JSON \
-        Module::Build \
-        Try::Tiny
-
-    # Installed alone due to package dependency issues
-    cpanm \
-        Bio::DB::HTS::Faidx
+    cpanm Bio::SeqFeature::Lite \
+          Bio::DB::HTS::Faidx
 }
 
 # gsutil used to pull VEP 85 cache from the Broad
@@ -59,7 +56,14 @@ function gsutil_install {
 
 function vep_install {
     mkdir -p "$VEP_CACHE_DIR"
-    aws s3 sync --exclude "*" --include "*vep_${VEP_VERSION}*" "$VEP_S3_SOURCE$VEP_S3_CACHE_PATH" /tmp
+
+    # VEP files are grabbed individually instead of with 'aws s3 sync' due to
+    # sync exiting with a status code of '2', which packer views as a failure.
+    mapfile -t VEP_FILES < <(aws s3 ls "$VEP_S3_SOURCE$VEP_S3_CACHE_PATH"/ | grep "vep_$VEP_VERSION" | awk '{print $4}')
+    for VEP_FILE in "${VEP_FILES[@]}"
+    do
+        aws s3 cp "$VEP_S3_SOURCE$VEP_S3_CACHE_PATH/$VEP_FILE" /tmp
+    done
 
     # Install VEP - the earliest version available from GitHub is 87
     if [ "$VEP_VERSION" -ge 87 ]; then
